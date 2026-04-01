@@ -44,13 +44,17 @@ def analyze_risk(parsed_guidlines, parsed_application_form):
 @st.cache_data
 @st.cache_resource
 def extract_data(file, file_name):
-    if isinstance(file, bytes):  
-        with open("temp_file.pdf", "wb") as temp_file:
-            temp_file.write(file)
-        file_path = "temp_file.pdf"
-    else:
-        file_path = file.name
+    # 1. Extract bytes from the Streamlit UploadedFile object
+    file_bytes = file.getvalue()
+    
+    # 2. Create a unique temporary file path on the server's disk
+    file_path = f"temp_{file_name}.pdf"
+    
+    # 3. Write the bytes to this physical file
+    with open(file_path, "wb") as temp_file:
+        temp_file.write(file_bytes)
 
+    # 4. Now LangChain can read it from the disk
     loader = PyPDFLoader(file_path)
     pages = loader.load()
 
@@ -77,11 +81,11 @@ def extract_data(file, file_name):
         docs = text_splitter.split_documents(pages)
         text_content = "\n\n".join([doc.page_content for doc in docs])
 
-    if isinstance(file, bytes):
+    # 5. Clean up the physical file so we don't clog the server
+    if os.path.exists(file_path):
         os.remove(file_path)
 
     return text_content
-
 
 
 async def extract_data_async(file, file_name):
