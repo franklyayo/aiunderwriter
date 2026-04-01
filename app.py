@@ -10,6 +10,21 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter, SentenceTra
 import asyncio
 import threading
 
+st.set_page_config(
+    page_title="AI Underwriter Pro",
+    page_icon="🛡️",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
+hide_st_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            header {visibility: hidden;}
+            </style>
+            """
+st.markdown(hide_st_style, unsafe_allow_html=True)
 
 def analyze_risk(parsed_guidlines, parsed_application_form):
     prompt = f"""<guidelines>{parsed_guidlines}</guidelines> <application_form>{parsed_application_form}</application_form>."""
@@ -103,32 +118,57 @@ async def extract_data_async(file, file_name):
 
 
 async def main():
-    st.title('Risk Analysis')
+    # --- Custom Header ---
+    st.markdown("<h1 style='text-align: center;'>Insurance Risk Analysis Engine</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #6B7280;'>Upload the underwriting guidelines and application form to instantly generate a risk profile.</p>", unsafe_allow_html=True)
+    st.divider()
 
-    st.write('Upload files for risk analysis:')
-    uploaded_underwriting_guidelines = st.file_uploader('Underwriting Guidelines', type="pdf", help='Upload Insurance underwriting guidelines')
-    uploaded_application_form = st.file_uploader('Application form', type="pdf", help='Upload Insurance application form')
+    # --- Side-by-Side Uploaders ---
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("📄 Guidelines")
+        uploaded_underwriting_guidelines = st.file_uploader('Upload Underwriting Guidelines', type="pdf", help='Must be a standard PDF document')
         
-    if st.button('Analyze Risk'):
-        with st.spinner("Processing files..."):
-            parsed_guidelines = extract_data(uploaded_underwriting_guidelines, "underwriting_guidlines")
-            parsed_application_form = extract_data(uploaded_application_form, "application_form")
- 
-        # with st.spinner("Processing files..."):
-        #     parsed_guidelines = await extract_data_async(uploaded_underwriting_guidelines, "underwriting_guidelines")
-        #     parsed_application_form = await extract_data_async(uploaded_application_form, "application_form")
+    with col2:
+        st.subheader("📝 Application")
+        uploaded_application_form = st.file_uploader('Upload Application Form', type="pdf", help='Must be a standard PDF document')
+        
+    st.write("") # Add a little spacing
+
+    # --- Centered Call-to-Action Button ---
+    _, col_btn, _ = st.columns([1, 1, 1])
+    with col_btn:
+        # The type="primary" makes the button pop with the theme's main color
+        analyze_btn = st.button('Analyze Risk Profile', use_container_width=True, type="primary")
+
+    st.divider()
+
+    # --- Execution & Results ---
+    if analyze_btn:
+        if uploaded_underwriting_guidelines and uploaded_application_form:
             
-        
-        if parsed_guidelines is not None and parsed_application_form is not None:       
-            with st.spinner("Analyzing risk..."):     
+            with st.status("Performing Risk Analysis...", expanded=True) as status:
+                st.write("Extracting data from documents...")
+                parsed_guidelines = extract_data(uploaded_underwriting_guidelines, "underwriting_guidlines")
+                parsed_application_form = extract_data(uploaded_application_form, "application_form")
+                
+                st.write("Cross-referencing risks with OpenAI...")
                 relevant_risks = analyze_risk(parsed_guidelines, parsed_application_form)
-                st.write('Relevant Risks :')
-                for risk in relevant_risks:
-                    st.write(risk)
-        
+                
+                status.update(label="Analysis Complete!", state="complete", expanded=False)
+            
+            # --- Better Results Display ---
+            st.success("Risk factors identified successfully.")
+            st.subheader("Key Findings")
+            
+            for i, risk in enumerate(relevant_risks):
+                # Use expanders to keep the screen from getting too cluttered
+                with st.expander(f"Risk Factor {i+1}", expanded=True):
+                    st.info(risk)
+                    
         else:
-            st.write('Please upload both files to analyze risk.')
-
+            st.warning("⚠️ Please upload both the guidelines and the application form to proceed.")
 
             
 if __name__ == '__main__':
