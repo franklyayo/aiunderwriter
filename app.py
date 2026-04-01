@@ -58,7 +58,7 @@ def extract_data(file, file_name):
     loader = PyPDFLoader(file_path)
     pages = loader.load()
 
-   if file_name == "underwriting_guidlines":
+    if file_name == "underwriting_guidlines":
         # 1. Use standard splitter instead of the heavy BAAI model
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=50, length_function=len)
         guidelines_docs = text_splitter.split_documents(pages)
