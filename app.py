@@ -6,7 +6,7 @@ import streamlit as st
 from openai import OpenAI
 from transformers import pipeline
 from langchain_community.document_loaders import PyPDFLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter, SentenceTransformersTokenTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter, SentenceTransformersTokenTextSplitter
 import asyncio
 import threading
 
