@@ -5,7 +5,7 @@ import pandas as pd
 import streamlit as st
 from openai import OpenAI
 from transformers import pipeline
-from langchain.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter, SentenceTransformersTokenTextSplitter
 import asyncio
 import threading
