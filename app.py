@@ -58,24 +58,31 @@ def extract_data(file, file_name):
     loader = PyPDFLoader(file_path)
     pages = loader.load()
 
-    if file_name == "underwriting_guidlines":
-        text_splitter = SentenceTransformersTokenTextSplitter(
-            chunk_overlap=50, 
-            model_name="BAAI/bge-large-en-v1.5", 
-            tokens_per_chunk=512
-        )
+   if file_name == "underwriting_guidlines":
+        # 1. Use standard splitter instead of the heavy BAAI model
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=50, length_function=len)
         guidelines_docs = text_splitter.split_documents(pages)
         guidelines = "\n\n".join([doc.page_content for doc in guidelines_docs])
-        chunk_size = 512
-        summarized_chunks = []
+        
+        chunk_size = 2000
         chunks = [guidelines[i:i+chunk_size] for i in range(0, len(guidelines), chunk_size)]
-        summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+        
+        # 2. Use OpenAI for summarization instead of local BART
+        client = OpenAI()
+        summarized_texts = []
         for chunk in chunks:
-            summarized_chunk = summarizer(chunk, max_length=chunk_size)
-            summarized_chunks.append(summarized_chunk)
-        summarized_texts = [result[0]["summary_text"] for result in summarized_chunks]
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are a helpful assistant. Summarize the following insurance underwriting guidelines concisely, retaining all critical risk factors."},
+                    {"role": "user", "content": chunk}
+                ],
+                temperature=0
+            )
+            summarized_texts.append(response.choices[0].message.content)
+            
         text_content = "\n\n".join(summarized_texts)
-    
+       
     else:
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=50, length_function=len)
         docs = text_splitter.split_documents(pages)
